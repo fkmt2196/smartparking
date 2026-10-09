@@ -16,14 +16,6 @@
     $('#switchAcc').addEventListener('click', function () { S.auth.logout(); renderResume(); $('#email').focus(); });
   }
 
-  /* Hiện thông tin và nút điền nhanh cho cả hai tài khoản demo. */
-  function renderDemo() {
-    $('#demo').innerHTML = '<span class="muted">Tài khoản demo:</span><div class="demo-accounts">' +
-      S.DEMO_ACCOUNTS.map(function (a) {
-        return '<div class="demo-account"><b>' + S.auth.ROLE_LABEL[a.role] + '</b><div><span class="mono">' + S.esc(a.email) + '</span> &nbsp; <span class="mono">' + S.esc(a.pass) + '</span></div>' +
-          '<button class="btn sm" type="button" data-demo-role="' + a.role + '">Điền tài khoản ' + (a.role === 'admin' ? 'Ban quản lý' : 'khách') + '</button></div>';
-      }).join('') + '</div>';
-  }
   function clearErr() {
     ['emailErr', 'passErr', 'nameErr', 'confirmPassErr'].forEach(function (i) { $('#' + i).textContent = ''; });
     ['email', 'pass', 'registerName', 'confirmPass'].forEach(function (i) { $('#' + i).removeAttribute('aria-invalid'); });
@@ -39,7 +31,6 @@
     $('#loginTitle').textContent = registering ? 'Đăng ký tài khoản khách' : 'Đăng nhập';
     $('#submitBtn').textContent = registering ? 'Tạo tài khoản' : 'Đăng nhập';
     $('#modeBtn').textContent = registering ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký';
-    $('#demo').hidden = registering;
     $('#msg').hidden = true;
     clearErr();
   }
@@ -48,13 +39,6 @@
     var c = document.querySelector('.login'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
   }
 
-  /* Điền nhanh tài khoản demo được bấm, không cần chọn cổng đăng nhập. */
-  $('#demo').addEventListener('click', function (e) {
-    var b = e.target.closest('button[data-demo-role]'); if (!b) return;
-    var a = S.ACCOUNTS.filter(function (x) { return x.role === b.getAttribute('data-demo-role'); })[0];
-    if (!a) return;
-    $('#email').value = a.email; $('#pass').value = a.pass; clearErr(); $('#submitBtn').focus();
-  });
   $('#modeBtn').addEventListener('click', function () {
     setMode(mode === 'login' ? 'register' : 'login');
   });
@@ -85,10 +69,10 @@
       return;
     }
     var s = S.auth.login(email, pass);
-    if (!s) { fail('Email hoặc mật khẩu chưa đúng. Hãy kiểm tra lại hoặc dùng tài khoản demo bên dưới.'); return; }
+    if (!s) { fail('Email hoặc mật khẩu chưa đúng. Hãy kiểm tra lại thông tin đăng nhập.'); return; }
     $('#submitBtn').disabled = true; $('#submitBtn').textContent = 'Đang vào...';
     location.href = S.auth.HOME[s.role];
   });
 
-  renderResume(); renderDemo();
+  renderResume();
 })();
