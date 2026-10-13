@@ -15,4 +15,8 @@
     <ProjectReference Include="..\Parking.Persistence\Parking.Persistence.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Data\parking-lots.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
