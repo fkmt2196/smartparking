@@ -1,0 +1,22 @@
+// SAMPLE DATA – chờ Thức cung cấp dữ liệu chính thức.
+// API contract (id, name, availableSlots, hourlyRate) chưa được Song xác nhận.
+[
+  {
+    "id": 1,
+    "name": "Bãi xe FPT Software Quận 9",
+    "availableSlots": 24,
+    "hourlyRate": 15000
+  },
+  {
+    "id": 2,
+    "name": "Bãi xe Vincom Landmark 81",
+    "availableSlots": 0,
+    "hourlyRate": 25000
+  },
+  {
+    "id": 3,
+    "name": "Bãi xe Aeon Mall Tân Phú",
+    "availableSlots": 8,
+    "hourlyRate": 18000
+  }
+]
