@@ -1,0 +1,26 @@
+name: smartparking
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: smartparking-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-smartparking}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the .env file}
+      POSTGRES_DB: ${POSTGRES_DB:-smartparking_dev}
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - smartparking_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-smartparking} -d ${POSTGRES_DB:-smartparking_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  smartparking_pgdata:

@@ -1,5 +1,6 @@
 using Parking.Application.Common.Interfaces;
 using Parking.Application.Services;
+using Parking.Persistence;
 using Parking.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,9 @@ builder.Services.AddScoped<ParkingSlotService>();
 var parkingLotsDataPath = ResolveParkingLotsDataPath(builder);
 builder.Services.AddScoped<IParkingLotRepository>(_ => new ParkingLotRepository(parkingLotsDataPath));
 builder.Services.AddScoped<ParkingLotService>();
+
+var parkingConnectionString = builder.Configuration.GetConnectionString("Parking");
+builder.Services.AddParkingDatabase(parkingConnectionString);
 
 // CORS: chỉ mở origin trong cấu hình. Chưa xác nhận origin frontend của Song.
 // Không dùng wildcard (*). Cập nhật Cors:AllowedOrigins khi có origin chính thức.
@@ -37,6 +41,12 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+if (string.IsNullOrWhiteSpace(app.Configuration.GetConnectionString("Parking")))
+{
+    app.Logger.LogInformation(
+        "Chưa cấu hình ConnectionStrings:Parking. API JSON/mock vẫn chạy. Đặt User Secrets hoặc biến môi trường ConnectionStrings__Parking khi cần PostgreSQL. Xem docs/database/README.md.");
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
