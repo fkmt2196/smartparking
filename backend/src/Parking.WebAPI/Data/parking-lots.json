@@ -1,5 +1,3 @@
-// SAMPLE DATA – chờ Thức cung cấp dữ liệu chính thức.
-// API contract (id, name, availableSlots, hourlyRate) chưa được Song xác nhận.
 [
   {
     "id": 1,
