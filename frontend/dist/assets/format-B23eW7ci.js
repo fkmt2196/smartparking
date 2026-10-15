@@ -1,0 +1,1 @@
+var e=new Intl.NumberFormat(`vi-VN`,{style:`currency`,currency:`VND`,maximumFractionDigits:0});function t(t){return e.format(t)}export{t};

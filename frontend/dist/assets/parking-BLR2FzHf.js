@@ -1,0 +1,1 @@
+var e={car:`Ô tô`},t={free:`Còn trống`,reserved:`Đã đặt`,occupied:`Đang sử dụng`,maintenance:`Bảo trì`};function n(e){return e.filter(e=>e.status===`free`).length}function r(e){return e.id.slice(e.id.lastIndexOf(`-`)+1)}export{e as i,r as n,t as r,n as t};
