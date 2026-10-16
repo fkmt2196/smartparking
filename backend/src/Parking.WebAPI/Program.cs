@@ -15,6 +15,7 @@ builder.Services.AddScoped<ParkingSlotService>();
 var parkingLotsDataPath = ResolveParkingLotsDataPath(builder);
 builder.Services.AddScoped<IParkingLotRepository>(_ => new ParkingLotRepository(parkingLotsDataPath));
 builder.Services.AddScoped<ParkingLotService>();
+builder.Services.AddScoped<IoTService>();
 
 var parkingConnectionString = builder.Configuration.GetConnectionString("Parking");
 builder.Services.AddParkingDatabase(parkingConnectionString);

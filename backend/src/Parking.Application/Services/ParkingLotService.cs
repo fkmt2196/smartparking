@@ -16,4 +16,19 @@ public class ParkingLotService
     {
         return await _repository.GetAllAsync();
     }
+
+    public async Task<ParkingLot?> GetByIdAsync(int id)
+    {
+        return await _repository.GetByIdAsync(id);
+    }
+
+    public async Task<bool> UpdateAvailableSlotsAsync(int id, int delta)
+    {
+        return await _repository.UpdateAvailableSlotsAsync(id, delta);
+    }
+
+    public async Task<bool> ResetToDefaultAsync()
+    {
+        return await _repository.ResetToDefaultAsync();
+    }
 }
