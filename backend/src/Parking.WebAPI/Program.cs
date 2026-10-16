@@ -77,6 +77,7 @@ if (app.Environment.IsDevelopment())
                         url: '/openapi/v1.json',
                         dom_id: '#swagger-ui',
                         deepLinking: true,
+                        validatorUrl: null,
                         presets: [
                             SwaggerUIBundle.presets.apis,
                             SwaggerUIBundle.SwaggerUIStandalonePreset

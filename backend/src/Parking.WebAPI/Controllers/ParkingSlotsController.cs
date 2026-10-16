@@ -21,7 +21,7 @@ public class ParkingSlotsController : ControllerBase
         return Ok(slots);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
         var slot = await _parkingSlotService.GetSlotByIdAsync(id);

@@ -13,12 +13,12 @@ from datetime import datetime
 import urllib.request
 import urllib.error
 
-DEFAULT_API_URL = "http://localhost:5242"
+DEFAULT_API_URL = "http://localhost:5174"
 
-LOTS = [
-    {"id": 1, "name": "Bãi xe FPT Software Quận 9", "slots": 24},
-    {"id": 2, "name": "Bãi xe Vincom Landmark 81", "slots": 0},
-    {"id": 3, "name": "Bãi xe Aeon Mall Tân Phú", "slots": 8}
+SAMPLE_PLATES = [
+    "51B1-12345", "51F-67890", "30A-11111", "92C-22222", "43B-33333",
+    "51G-44444", "29H-55555", "36K-66666", "51D-77777", "60A-88888",
+    "72E-99999", "51B2-00001", "37A-10203", "48C-30405", "59D-50607"
 ]
 
 def make_request(url, method="GET", data=None):
@@ -44,12 +44,40 @@ def fetch_lots(base_url):
         return data
     return None
 
-def send_event(base_url, lot_id, event_type, slot_num=None):
+def fetch_parked_cars(base_url):
+    status, data = make_request(f"{base_url}/api/iot/parked-cars")
+    if status == 200 and isinstance(data, list):
+        return data
+    return []
+
+def get_available_plate(parked_cars):
+    parked_ids = {c.get("carId", "").upper() for c in parked_cars}
+    available = [p for p in SAMPLE_PLATES if p.upper() not in parked_ids]
+    if available:
+        return random.choice(available)
+    return f"51K-{random.randint(10000, 99999)}"
+
+def send_event(base_url, lot_id, event_type, car_id=None, slot_num=None):
     if not slot_num:
         slot_num = f"SLOT-{random.randint(1, 20):02d}"
-    device_id = f"SENSOR-LOT{lot_id}-{slot_num}"
+
+    parked_cars = fetch_parked_cars(base_url)
+
+    if not car_id:
+        if event_type in ("CarParked", "CheckIn"):
+            car_id = get_available_plate(parked_cars)
+        elif event_type in ("CarDeparted", "CheckOut"):
+            cars_in_lot = [c for c in parked_cars if c.get("parkingLotId") == lot_id]
+            if cars_in_lot:
+                car_id = cars_in_lot[0].get("carId")
+            else:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Bãi #{lot_id} hiện chưa có xe nào đang đỗ để check-out.")
+                return False
+        else:
+            car_id = f"SENSOR-SYS-{lot_id}"
+
     payload = {
-        "deviceId": device_id,
+        "carId": car_id,
         "parkingLotId": lot_id,
         "slotNumber": slot_num,
         "eventType": event_type,
@@ -59,9 +87,9 @@ def send_event(base_url, lot_id, event_type, slot_num=None):
     status, resp = make_request(f"{base_url}/api/iot/events", method="POST", data=payload)
     now = datetime.now().strftime("%H:%M:%S")
 
-    tag = "🚗 [XE VÀO]" if event_type == "CarParked" else "🚙 [XE RA ]" if event_type == "CarDeparted" else "⚠️ [LỖI   ]"
+    tag = "🚗 [XE VÀO]" if event_type in ("CarParked", "CheckIn") else "🚙 [XE RA ]" if event_type in ("CarDeparted", "CheckOut") else "⚠️ [LỖI   ]"
     if status == 200:
-        print(f"[{now}] {tag} {resp.get('message', 'Thành công')} (Thiết bị: {device_id})")
+        print(f"[{now}] {tag} {resp.get('message', 'Thành công')} (Biển số: {car_id})")
     else:
         print(f"[{now}] ❌ HTTP {status}: {resp.get('message', resp.get('error', 'Lỗi không xác định'))}")
     return status == 200
@@ -72,14 +100,22 @@ def run_auto_simulation(base_url, interval=3):
     try:
         while True:
             lots = fetch_lots(base_url)
+            parked = fetch_parked_cars(base_url)
             if not lots:
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ Không thể kết nối Backend tại {base_url}. Đang thử lại...")
                 time.sleep(interval)
                 continue
 
-            lot = random.choice(lots)
-            action = "CarParked" if lot.get("availableSlots", 0) > 0 and random.random() < 0.65 else "CarDeparted"
-            send_event(base_url, lot["id"], action)
+            # Quyết định hành động thông minh:
+            if parked and random.random() < 0.45:
+                random_car = random.choice(parked)
+                send_event(base_url, random_car["parkingLotId"], "CarDeparted", car_id=random_car["carId"])
+            else:
+                available_lots = [l for l in lots if l.get("availableSlots", 0) > 0]
+                if available_lots:
+                    lot = random.choice(available_lots)
+                    send_event(base_url, lot["id"], "CarParked")
+
             time.sleep(interval)
     except KeyboardInterrupt:
         print("\n🛑 Đã dừng mô phỏng tự động.\n")
@@ -87,24 +123,31 @@ def run_auto_simulation(base_url, interval=3):
 def reset_lots(base_url):
     status, resp = make_request(f"{base_url}/api/iot/reset", method="POST")
     if status == 200:
-        print("✅ Đã reset dữ liệu 3 bãi xe về mặc định thành công!")
+        print("✅ Đã reset dữ liệu 3 bãi xe và danh sách xe về mặc định thành công!")
     else:
         print(f"❌ Lỗi reset: {resp}")
 
 def print_lots_status(base_url):
     lots = fetch_lots(base_url)
+    parked = fetch_parked_cars(base_url)
     if not lots:
         print(f"⚠️ Không thể kết nối tới {base_url}/parking-lots")
         return
 
-    print("\n" + "="*60)
+    print("\n" + "="*65)
     print("  TRẠNG THÁI HIỆN TẠI CÁC BÃI XE (LIVE TỪ API)")
-    print("="*60)
+    print("="*65)
     for lot in lots:
         slots = lot.get("availableSlots", 0)
         status_text = f"{slots:2d} chỗ trống" if slots > 0 else "HẾT CHỖ (FULL)"
         print(f"  [ID {lot['id']}] {lot['name']:<30} : {status_text} | {lot.get('hourlyRate', 0):,} đ/h")
-    print("="*60 + "\n")
+    print("-" * 65)
+    if parked:
+        cars_str = ", ".join(f"{c['carId']} (Bãi #{c['parkingLotId']})" for c in parked[:5])
+        print(f"  Xe đang đỗ ({len(parked)} xe): {cars_str}{'...' if len(parked) > 5 else ''}")
+    else:
+        print("  Xe đang đỗ: Chưa có xe nào trong hệ thống.")
+    print("="*65 + "\n")
 
 def main():
     base_url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_API_URL
@@ -126,7 +169,7 @@ def main():
         print("  7. ⚡ Bật chế độ tự động mô phỏng (Auto Traffic Simulation)")
         print("  8. 🔄 Reset về dữ liệu gốc (24, 0, 8)")
         print("  0. Thoát")
-        
+
         choice = input("\nNhập lựa chọn [0-8]: ").strip()
         if choice == "0":
             print("Tạm biệt!")
@@ -143,7 +186,7 @@ def main():
             reset_lots(base_url)
         else:
             print("Lựa chọn không hợp lệ, vui lòng chọn lại.")
-        
+
         time.sleep(0.5)
 
 if __name__ == "__main__":
