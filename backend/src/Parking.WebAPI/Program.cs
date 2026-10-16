@@ -53,6 +53,40 @@ if (string.IsNullOrWhiteSpace(app.Configuration.GetConnectionString("Parking")))
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    // Swagger UI endpoint phục vụ kiểm thử API trực quan
+    app.MapGet("/swagger", () => Results.Content("""
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>Smart Parking API - Swagger UI</title>
+            <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+            <style>
+                body { margin: 0; background: #fafafa; font-family: sans-serif; }
+                .topbar { display: none; }
+            </style>
+        </head>
+        <body>
+            <div id="swagger-ui"></div>
+            <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+            <script>
+                window.onload = () => {
+                    window.ui = SwaggerUIBundle({
+                        url: '/openapi/v1.json',
+                        dom_id: '#swagger-ui',
+                        deepLinking: true,
+                        presets: [
+                            SwaggerUIBundle.presets.apis,
+                            SwaggerUIBundle.SwaggerUIStandalonePreset
+                        ]
+                    });
+                };
+            </script>
+        </body>
+        </html>
+        """, "text/html"));
 }
 
 app.UseHttpsRedirection();
