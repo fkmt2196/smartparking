@@ -14,6 +14,10 @@ public class ParkingDbContext : DbContext
     public DbSet<ParkingFloor> ParkingFloors => Set<ParkingFloor>();
     public DbSet<ParkingSlot> ParkingSlots => Set<ParkingSlot>();
 
+    // Sprint 3 – Thức: Event Ingestion Pipeline
+    public DbSet<ParkingSession>  ParkingSessions  => Set<ParkingSession>();
+    public DbSet<ParkingEventLog> ParkingEventLogs => Set<ParkingEventLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("parking");
@@ -52,6 +56,20 @@ public class ParkingDbContext : DbContext
         foreach (var entry in ChangeTracker.Entries<ParkingSlot>())
         {
             if (entry.State is EntityState.Added or EntityState.Modified)
+            {
+                entry.Entity.UpdatedAtUtc = utcNow;
+            }
+        }
+
+        // Sprint 3 – Thức
+        foreach (var entry in ChangeTracker.Entries<ParkingSession>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAtUtc = utcNow;
+                entry.Entity.UpdatedAtUtc = utcNow;
+            }
+            else if (entry.State == EntityState.Modified)
             {
                 entry.Entity.UpdatedAtUtc = utcNow;
             }

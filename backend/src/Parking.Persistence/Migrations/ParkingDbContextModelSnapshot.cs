@@ -23,6 +23,109 @@ namespace Parking.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Parking.Domain.Entities.ParkingEventLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("CarPlate")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("car_plate");
+
+                    b.Property<string>("EventId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("event_id");
+
+                    b.Property<DateTimeOffset>("EventTimestampUtc")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("event_timestamp_utc");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("event_type");
+
+                    b.Property<int>("ParkingLotId")
+                        .HasColumnType("integer")
+                        .HasColumnName("parking_lot_id");
+
+                    b.Property<string>("ProcessingStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("accepted")
+                        .HasColumnName("processing_status");
+
+                    b.Property<DateTimeOffset>("ReceivedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("received_at_utc")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("RejectReason")
+                        .HasColumnType("text")
+                        .HasColumnName("reject_reason");
+
+                    b.Property<string>("SessionId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("session_id");
+
+                    b.Property<string>("SlotCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("slot_code");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source");
+
+                    b.Property<string>("TriggeredBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("triggered_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarPlate")
+                        .HasDatabaseName("ix_event_logs_car_plate");
+
+                    b.HasIndex("EventId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_event_logs_event_id");
+
+                    b.HasIndex("SessionId")
+                        .HasDatabaseName("ix_event_logs_session_id");
+
+                    b.HasIndex("ParkingLotId", "ReceivedAtUtc")
+                        .HasDatabaseName("ix_event_logs_lot_received");
+
+                    b.ToTable("parking_event_logs", "parking", t =>
+                        {
+                            t.HasComment("Nhật ký sự kiện IoT/Staff – append-only, không cập nhật hay xóa.");
+
+                            t.HasCheckConstraint("ck_event_logs_car_plate_not_empty", "length(trim(car_plate)) > 0");
+
+                            t.HasCheckConstraint("ck_event_logs_event_id_not_empty", "length(trim(event_id)) > 0");
+
+                            t.HasCheckConstraint("ck_event_logs_event_type", "event_type IN ('VehicleEntered', 'SensorTriggered', 'SlotParked', 'VehicleExited')");
+
+                            t.HasCheckConstraint("ck_event_logs_processing_status", "processing_status IN ('accepted', 'rejected', 'duplicate')");
+                        });
+                });
+
             modelBuilder.Entity("Parking.Domain.Entities.ParkingFloor", b =>
                 {
                     b.Property<int>("Id")
@@ -150,6 +253,132 @@ namespace Parking.Persistence.Migrations
                             t.HasCheckConstraint("ck_parking_lots_longitude", "longitude IS NULL OR (longitude >= -180 AND longitude <= 180)");
 
                             t.HasCheckConstraint("ck_parking_lots_name_not_empty", "length(trim(name)) > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Parking.Domain.Entities.ParkingSession", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("CarColor")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("car_color");
+
+                    b.Property<string>("CarModel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("car_model");
+
+                    b.Property<string>("CarPlate")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("car_plate");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at_utc")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTimeOffset>("EnteredAtUtc")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("entered_at_utc");
+
+                    b.Property<string>("EntryImageUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("entry_image_url");
+
+                    b.Property<string>("ExitImageUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("exit_image_url");
+
+                    b.Property<DateTimeOffset?>("ExitedAtUtc")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("exited_at_utc");
+
+                    b.Property<string>("FuelType")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("fuel_type");
+
+                    b.Property<string>("GateStaffId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("gate_staff_id");
+
+                    b.Property<DateTimeOffset?>("ParkedAtUtc")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("parked_at_utc");
+
+                    b.Property<int>("ParkingLotId")
+                        .HasColumnType("integer")
+                        .HasColumnName("parking_lot_id");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("session_id");
+
+                    b.Property<string>("SlotCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("slot_code");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("pending_slot")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("updated_at_utc")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("WarningCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("warning_code");
+
+                    b.Property<string>("ZoneStaffId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("zone_staff_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_sessions_session_id");
+
+                    b.HasIndex("CarPlate", "Status")
+                        .HasDatabaseName("ix_sessions_plate_status");
+
+                    b.HasIndex("ParkingLotId", "Status")
+                        .HasDatabaseName("ix_sessions_lot_status");
+
+                    b.ToTable("parking_sessions", "parking", t =>
+                        {
+                            t.HasComment("Phiên gửi xe – mỗi lượt vào/ra tạo 1 phiên.");
+
+                            t.HasCheckConstraint("ck_sessions_car_plate_not_empty", "length(trim(car_plate)) > 0");
+
+                            t.HasCheckConstraint("ck_sessions_session_id_not_empty", "length(trim(session_id)) > 0");
+
+                            t.HasCheckConstraint("ck_sessions_slot_code_format", "slot_code IS NULL OR slot_code ~ '^[A-Z][0-9]{1,2}-[0-9]{3}$'");
+
+                            t.HasCheckConstraint("ck_sessions_status", "status IN ('pending_slot', 'parked', 'exited')");
                         });
                 });
 

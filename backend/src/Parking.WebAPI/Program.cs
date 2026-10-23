@@ -1,4 +1,5 @@
 using Parking.Application.Common.Interfaces;
+using Parking.Application.Events;
 using Parking.Application.Services;
 using Parking.Persistence;
 using Parking.Persistence.Repositories;
@@ -15,6 +16,11 @@ builder.Services.AddScoped<ParkingSlotService>();
 var parkingLotsDataPath = ResolveParkingLotsDataPath(builder);
 builder.Services.AddScoped<IParkingLotRepository>(_ => new ParkingLotRepository(parkingLotsDataPath));
 builder.Services.AddScoped<ParkingLotService>();
+
+// Sprint 3 – Thức: Event Ingestion Pipeline
+builder.Services.AddScoped<IParkingEventLogRepository, ParkingEventLogRepository>();
+builder.Services.AddScoped<IParkingSessionRepository, ParkingSessionRepository>();
+builder.Services.AddScoped<ParkingEventService>();
 
 var parkingConnectionString = builder.Configuration.GetConnectionString("Parking");
 builder.Services.AddParkingDatabase(parkingConnectionString);
